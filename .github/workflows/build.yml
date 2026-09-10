@@ -1,4 +1,4 @@
-name: Compilar firmware GI X
+name: Compilar GI X Camera OTA
 
 on:
   push:
@@ -29,9 +29,11 @@ jobs:
           arduino-cli lib update-index
           arduino-cli lib install "Timer-CAM@1.0.1"
 
-      - name: Ver placas disponibles
+      - name: Descomprimir firmware
         run: |
-          arduino-cli board listall | grep -i Timer
+          mkdir firmware
+          unzip GIX_TimerCamera_Bright_OTA.zip -d firmware
+          find firmware -type f
 
       - name: Compilar firmware
         run: |
@@ -39,7 +41,7 @@ jobs:
           arduino-cli compile \
             --fqbn m5stack:esp32:timer_cam \
             --output-dir build \
-            GIX_TimerCamera_Bright
+            firmware/GIX_TimerCamera_Bright
 
       - name: Preparar BIN OTA
         run: |
