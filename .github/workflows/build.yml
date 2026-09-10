@@ -1,0 +1,53 @@
+name: Compilar firmware GI X
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: Instalar Arduino CLI
+        uses: arduino/setup-arduino-cli@v2
+
+      - name: Configurar M5Stack
+        run: |
+          arduino-cli config init
+          arduino-cli config add board_manager.additional_urls https://static-cdn.m5stack.com/resource/arduino/package_m5stack_index.json
+          arduino-cli core update-index
+          arduino-cli core install m5stack:esp32@2.0.9
+
+      - name: Instalar Timer-CAM
+        run: |
+          arduino-cli lib update-index
+          arduino-cli lib install "Timer-CAM@1.0.1"
+
+      - name: Ver placas disponibles
+        run: |
+          arduino-cli board listall | grep -i Timer
+
+      - name: Compilar firmware
+        run: |
+          mkdir -p build
+          arduino-cli compile \
+            --fqbn m5stack:esp32:timer_cam \
+            --output-dir build \
+            GIX_TimerCamera_Bright
+
+      - name: Preparar BIN OTA
+        run: |
+          cp build/GIX_TimerCamera_Bright.ino.bin GIX-TimerCamera-BRIGHT-OTA.bin
+          ls -lh GIX-TimerCamera-BRIGHT-OTA.bin
+
+      - name: Subir BIN
+        uses: actions/upload-artifact@v4
+        with:
+          name: GIX-TimerCamera-BRIGHT-OTA
+          path: GIX-TimerCamera-BRIGHT-OTA.bin
